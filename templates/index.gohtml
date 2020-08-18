@@ -1,0 +1,101 @@
+
+<!doctype html>
+<html lang="tr">
+  <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="/static/css/bootstrap.min.css" >
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
+        <title>Todo List</title>
+        <style>
+            .checked{text-decoration:line-through; color:green}
+        </style>
+  </head>
+  <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 offset-md-3 mt-3">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">TODO</span>
+                        </div>
+                        <input type="text" class="form-control" id="todo" placeholder="Todo...." autofocus>
+                    </div>
+            
+                    <ul class="list-group" id="todos"></ul>
+                </div>
+            </div>
+        </div>
+        <script src="/static/js/jquery-3.5.1.min.js" ></script>
+        <script src="/static/js/notify.js" ></script>
+        <script>
+            console.clear();
+            console.log("%c**TODO Starting...","color:green;font-size:20px;font-style:italic")
+            $(()=>{
+                $("#todo").keyup(function(event){
+                    const todo = $(this).val().trim();
+                    if(event.keyCode == 13 && todo != ''){
+                        $.post('/add-todo', {todo:todo}, function(response){
+                            if(response.Status){
+                                $("#todo").val('');
+                            }
+                            notify(response.Status);
+                        },'json')
+                    }
+                });
+
+                //todo delete
+                $(document).on('click', '.todo-delete', function(){
+                    const id = $(this).parent().data('id');
+                    $.post('/delete-todo', {id:id},function(response){
+                        notify(response.Status);
+                    },'json')
+                });
+
+                //todo change
+                $(document).on('change', '.todo-change', function(){
+                    const id        = $(this).parent().data('id');
+                    const status    = $(this).parent().data('status') == 'complete' ? 'uncomplete' :'complete';
+
+                    $.post('/change-status-todo', {id:id, status:status}, function(response){
+                        notify(response.Status);
+                    },'json')
+                });
+
+                getTodos();
+            });
+
+            function notify(status){
+                if(status){
+                    $.notify('İşlem başarılı...', 'success');
+                    getTodos();
+                }else{
+                    $.notify('İşlem başarısız...', 'error');
+                }
+            }
+
+            function getTodos(){
+                $.get('/get-todo',function(response){
+                    $('#todos').html('');
+                    let data    = '';
+                    let checked = '';
+                    response.forEach((todo, index)=>{
+                        console.log(todo, index);
+                        checked = todo.Status == 'complete' ? 'checked' : '';
+                        index++;
+                        data = `
+                            <li class="list-group-item d-flex justify-content-between align-items-center ${checked}">
+                                ${index} - ${todo.Todo}
+                                <span data-id="${todo.Id}" data-status="${todo.Status}">
+                                    <input type="checkbox" class="form-check-input todo-change pr-1" ${checked}>
+                                    <i class="far fa-trash-alt text-danger todo-delete" style="cursor:pointer"></i>
+                                </span>
+                            </li>
+                        `;
+                        $('#todos').append(data);
+                    });
+                }, 'json');
+            }
+        </script>
+  </body>
+</html>
