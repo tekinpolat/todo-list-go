@@ -22,7 +22,7 @@ type Todos struct{
 }
 
 func dbConn() (db *sql.DB) {
-    db, err := sql.Open("mysql", "user:pass(127.0.0.1:3306)/todo_go")
+    db, err := sql.Open("mysql", "user:pass@tcp(127.0.0.1:3306)/todo_go")
     if err != nil {
         panic(err.Error())
     }
